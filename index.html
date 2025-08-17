@@ -7,10 +7,10 @@
 <style>
   body {
     font-family: sans-serif;
-    text-align: center;
     margin: 0;
     padding: 0;
     background: #f4f4f4;
+    text-align: center;
   }
   .container {
     max-width: 800px;
@@ -72,13 +72,16 @@
 </style>
 </head>
 <body>
+
 <div id="game" class="container">
+  <!-- スタート画面 -->
   <section id="start-screen" class="screen active">
     <h1 class="title">AED設置コンビニを探せ！</h1>
     <p class="subtitle">地域を選んで、AEDを置いているコンビニを見つけよう</p>
     <button id="start-btn" class="big-btn">スタート</button>
   </section>
 
+  <!-- 地域選択画面 -->
   <section id="region-screen" class="screen">
     <h2>地域を選んでください</h2>
     <div id="region-list" class="grid"></div>
@@ -87,6 +90,7 @@
     </div>
   </section>
 
+  <!-- 都道府県選択画面 -->
   <section id="prefecture-screen" class="screen">
     <h2 id="prefecture-heading">都道府県を選んでください</h2>
     <div id="prefecture-list" class="grid"></div>
@@ -95,6 +99,7 @@
     </div>
   </section>
 
+  <!-- 市町村選択画面 -->
   <section id="city-screen" class="screen">
     <h2 id="city-heading">市町村を選んでください</h2>
     <div id="city-list" class="grid"></div>
@@ -103,6 +108,7 @@
     </div>
   </section>
 
+  <!-- 結果画面 -->
   <section id="result-screen" class="screen">
     <h2>AED設置コンビニ</h2>
     <p id="result-info"></p>
@@ -119,6 +125,7 @@
 </div>
 
 <script>
+// 画面切り替え
 const screens = {
   start: document.getElementById('start-screen'),
   region: document.getElementById('region-screen'),
@@ -140,12 +147,24 @@ function showScreen(screen) {
   screens[screen].classList.add('active');
 }
 
-startBtn.addEventListener('click', () => showScreen('region'));
-startBtn.addEventListener('touchstart', () => showScreen('region'));
-backRegionBtn.addEventListener('click', () => showScreen('start'));
-backPrefBtn.addEventListener('click', () => showScreen('region'));
-backCityBtn.addEventListener('click', () => showScreen('prefecture'));
-retryBtn.addEventListener('click', () => showScreen('region'));
+// PC・スマホ両方で反応
+[startBtn, backRegionBtn, backPrefBtn, backCityBtn, retryBtn].forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(btn.id === 'start-btn') showScreen('region');
+    if(btn.id === 'back-from-region') showScreen('start');
+    if(btn.id === 'back-from-pref') showScreen('region');
+    if(btn.id === 'back-from-city') showScreen('prefecture');
+    if(btn.id === 'retry-btn') showScreen('region');
+  });
+  btn.addEventListener('touchstart', () => {
+    if(btn.id === 'start-btn') showScreen('region');
+    if(btn.id === 'back-from-region') showScreen('start');
+    if(btn.id === 'back-from-pref') showScreen('region');
+    if(btn.id === 'back-from-city') showScreen('prefecture');
+    if(btn.id === 'retry-btn') showScreen('region');
+  });
+});
 </script>
+
 </body>
 </html>
