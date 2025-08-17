@@ -5,31 +5,83 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AED設置コンビニを探せ！</title>
 <style>
-  body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; text-align: center; }
-  .container { max-width: 800px; margin: auto; padding: 20px; }
-  .screen { display: none; }
-  .screen.active { display: block; }
-  .big-btn, .small-btn { display: inline-block; padding: 15px 25px; margin: 10px; font-size: 20px; background: #ff4c4c; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
-  .big-btn:hover, .small-btn:hover { background: #e33; }
-  .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-  .grid button { padding: 10px; min-width: 100px; background: #4caf50; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-  .grid button:hover { background: #3d8b40; }
-  .footer { margin-top: 20px; font-size: 12px; color: #666; }
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+    text-align: center;
+  }
+  .container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+  }
+  .screen {
+    display: none;
+  }
+  .screen.active {
+    display: block;
+  }
+  .big-btn, .small-btn {
+    display: inline-block;
+    padding: 15px 25px;
+    margin: 10px;
+    font-size: 20px;
+    background: #ff4c4c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .big-btn:hover, .small-btn:hover {
+    background: #e33;
+  }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .grid button {
+    padding: 10px;
+    min-width: 100px;
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .grid button:hover {
+    background: #3d8b40;
+  }
+  .footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #666;
+  }
   @media (max-width: 600px) {
-    .big-btn { width: 90%; font-size: 18px; }
-    .grid button { width: 90%; }
+    .big-btn {
+      width: 90%;
+      font-size: 18px;
+    }
+    .grid button {
+      width: 90%;
+    }
   }
 </style>
 </head>
 <body>
 
 <div id="game" class="container">
+  <!-- スタート画面 -->
   <section id="start-screen" class="screen active">
     <h1 class="title">AED設置コンビニを探せ！</h1>
     <p class="subtitle">地域を選んで、AEDを置いているコンビニを見つけよう</p>
     <button id="start-btn" class="big-btn">スタート</button>
   </section>
 
+  <!-- 地域選択画面 -->
   <section id="region-screen" class="screen">
     <h2>地域を選んでください</h2>
     <div id="region-list" class="grid"></div>
@@ -38,6 +90,7 @@
     </div>
   </section>
 
+  <!-- 都道府県選択画面 -->
   <section id="prefecture-screen" class="screen">
     <h2 id="prefecture-heading">都道府県を選んでください</h2>
     <div id="prefecture-list" class="grid"></div>
@@ -46,6 +99,7 @@
     </div>
   </section>
 
+  <!-- 市町村選択画面 -->
   <section id="city-screen" class="screen">
     <h2 id="city-heading">市町村を選んでください</h2>
     <div id="city-list" class="grid"></div>
@@ -54,6 +108,7 @@
     </div>
   </section>
 
+  <!-- 結果画面 -->
   <section id="result-screen" class="screen">
     <h2>AED設置コンビニ</h2>
     <p id="result-info"></p>
@@ -70,101 +125,157 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const data = {
-    "北海道・東北": {
-      "北海道": { "札幌市": ["セブンイレブン札幌中央店", "ファミリーマート札幌駅前店"], "函館市": ["ローソン函館五稜郭店"] },
-      "青森県": { "青森市": ["セブンイレブン青森駅前店"] }
-    },
-    "関東": {
-      "東京都": { "立川市": ["セブンイレブン立川駅北口店", "ファミリーマート立川幸町店"] }
-    }
-  };
+// 画面切り替え
+const screens = {
+  start: document.getElementById('start-screen'),
+  region: document.getElementById('region-screen'),
+  prefecture: document.getElementById('prefecture-screen'),
+  city: document.getElementById('city-screen'),
+  result: document.getElementById('result-screen')
+};
 
-  const screens = {
-    start: document.getElementById('start-screen'),
-    region: document.getElementById('region-screen'),
-    prefecture: document.getElementById('prefecture-screen'),
-    city: document.getElementById('city-screen'),
-    result: document.getElementById('result-screen')
-  };
-  function showScreen(screen) {
-    for (let key in screens) screens[key].classList.remove('active');
-    screens[screen].classList.add('active');
+const startBtn = document.getElementById('start-btn');
+const backRegionBtn = document.getElementById('back-from-region');
+const backPrefBtn = document.getElementById('back-from-pref');
+const backCityBtn = document.getElementById('back-from-city');
+const retryBtn = document.getElementById('retry-btn');
+
+function showScreen(screen) {
+  for (let key in screens) {
+    screens[key].classList.remove('active');
   }
+  screens[screen].classList.add('active');
+}
 
-  const startBtn = document.getElementById('start-btn');
-  const backRegionBtn = document.getElementById('back-from-region');
-  const backPrefBtn = document.getElementById('back-from-pref');
-  const backCityBtn = document.getElementById('back-from-city');
-  const retryBtn = document.getElementById('retry-btn');
-  const regionList = document.getElementById('region-list');
-  const prefectureList = document.getElementById('prefecture-list');
-  const cityList = document.getElementById('city-list');
-  const resultList = document.getElementById('result-list');
-  const resultInfo = document.getElementById('result-info');
-
-  function createButtons(container, items, clickHandler) {
-    container.innerHTML = "";
-    items.forEach(key => {
-      const btn = document.createElement('button');
-      btn.textContent = key;
-      btn.addEventListener('click', () => clickHandler(key));
-      btn.addEventListener('touchstart', () => clickHandler(key));
-      container.appendChild(btn);
-    });
-  }
-
-  let selectedRegion, selectedPref, selectedCity;
-
-  function regionClick(region) {
-    selectedRegion = region;
-    createButtons(prefectureList, Object.keys(data[region]), prefectureClick);
-    showScreen('prefecture');
-  }
-
-  function prefectureClick(pref) {
-    selectedPref = pref;
-    createButtons(cityList, Object.keys(data[selectedRegion][pref]), cityClick);
-    showScreen('city');
-  }
-
-  function cityClick(city) {
-    selectedCity = city;
-    const stores = data[selectedRegion][selectedPref][city];
-    resultList.innerHTML = "";
-    stores.forEach(s => {
-      const li = document.createElement('li');
-      li.textContent = s;
-      resultList.appendChild(li);
-    });
-    resultInfo.textContent = `${selectedRegion} > ${selectedPref} > ${city} のAED設置店舗`;
-    showScreen('result');
-  }
-
-  startBtn.addEventListener('click', () => {
-    createButtons(regionList, Object.keys(data), regionClick);
-    showScreen('region');
+// PC・スマホ両方で反応
+[startBtn, backRegionBtn, backPrefBtn, backCityBtn, retryBtn].forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(btn.id === 'start-btn') showScreen('region');
+    if(btn.id === 'back-from-region') showScreen('start');
+    if(btn.id === 'back-from-pref') showScreen('region');
+    if(btn.id === 'back-from-city') showScreen('prefecture');
+    if(btn.id === 'retry-btn') showScreen('region');
   });
-  startBtn.addEventListener('touchstart', () => {
-    createButtons(regionList, Object.keys(data), regionClick);
-    showScreen('region');
-  });
-
-  backRegionBtn.addEventListener('click', () => showScreen('start'));
-  backPrefBtn.addEventListener('click', () => showScreen('region'));
-  backCityBtn.addEventListener('click', () => showScreen('prefecture'));
-  retryBtn.addEventListener('click', () => showScreen('region'));
-  [backRegionBtn, backPrefBtn, backCityBtn, retryBtn].forEach(btn => {
-    btn.addEventListener('touchstart', () => btn.click());
-  });
-
-  document.getElementById('copy-btn').addEventListener('click', () => {
-    const text = Array.from(resultList.children).map(li => li.textContent).join("\n");
-    navigator.clipboard.writeText(text).then(() => alert("店舗名をコピーしました"));
+  btn.addEventListener('touchstart', () => {
+    if(btn.id === 'start-btn') showScreen('region');
+    if(btn.id === 'back-from-region') showScreen('start');
+    if(btn.id === 'back-from-pref') showScreen('region');
+    if(btn.id === 'back-from-city') showScreen('prefecture');
+    if(btn.id === 'retry-btn') showScreen('region');
   });
 });
 </script>
 
 </body>
 </html>
+
+/* CSS: CodePenのCSS欄へ */
+/* パステル基調のやさしいデザイン */
+:root{
+  --bg: #fbf9ff;
+  --card: #ffffff;
+  --accent: #bde0fe;
+  --accent2: #ffd6e0;
+  --text: #2e2e2e;
+  --muted: #7b7b7b;
+  --radius: 14px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:32px;
+  font-family: "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(180deg, var(--bg), #fff);
+  color: var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+}
+
+.container{
+  width:100%;
+  max-width:760px;
+  background:var(--card);
+  border-radius:18px;
+  box-shadow: 0 8px 30px rgba(34,34,34,0.08);
+  padding:28px;
+}
+
+.title{
+  margin:8px 0 6px;
+  font-size:28px;
+  letter-spacing:0.4px;
+}
+.subtitle{
+  margin:0 0 18px;
+  color:var(--muted);
+}
+
+.screen{ text-align:center; padding:10px 6px; }
+.hidden{ display:none; }
+
+.grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+  margin:16px 0 8px;
+}
+
+button{
+  border: none;
+  cursor:pointer;
+  border-radius:12px;
+  padding:10px 14px;
+  font-size:15px;
+  box-shadow: 0 6px 12px rgba(30,30,30,0.06);
+}
+
+.big-btn{
+  padding:12px 26px;
+  font-size:18px;
+  background: linear-gradient(180deg,var(--accent), #9fd7ff);
+  color:#063347;
+  border-radius:18px;
+}
+
+.small-btn{
+  background:#f3f6ff;
+  color:var(--text);
+  padding:8px 12px;
+}
+
+.region-btn{
+  min-width:160px;
+  max-width:200px;
+  background: linear-gradient(180deg, #fff, #fbfbff);
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow: 0 6px 10px rgba(20,20,20,0.04);
+}
+
+.pref-btn, .city-btn{
+  min-width:140px;
+  background:#fff7f9;
+}
+
+.result-list{
+  list-style:none;
+  padding:0;
+  margin:8px 0 12px;
+  max-height:260px;
+  overflow:auto;
+  text-align:left;
+}
+
+.result-list li{
+  background:linear-gradient(90deg,#fff,#fffefe);
+  padding:10px 12px;
+  margin:8px 12px;
+  border-radius:12px;
+  border:1px solid #f0f0f6;
+}
+
+.footer{ margin-top:12px; color:var(--muted); text-align:center; font-size:12px; }
