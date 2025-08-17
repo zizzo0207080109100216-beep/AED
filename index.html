@@ -74,14 +74,12 @@
 <body>
 
 <div id="game" class="container">
-  <!-- スタート画面 -->
   <section id="start-screen" class="screen active">
     <h1 class="title">AED設置コンビニを探せ！</h1>
     <p class="subtitle">地域を選んで、AEDを置いているコンビニを見つけよう</p>
     <button id="start-btn" class="big-btn">スタート</button>
   </section>
 
-  <!-- 地域選択画面 -->
   <section id="region-screen" class="screen">
     <h2>地域を選んでください</h2>
     <div id="region-list" class="grid"></div>
@@ -90,7 +88,6 @@
     </div>
   </section>
 
-  <!-- 都道府県選択画面 -->
   <section id="prefecture-screen" class="screen">
     <h2 id="prefecture-heading">都道府県を選んでください</h2>
     <div id="prefecture-list" class="grid"></div>
@@ -99,7 +96,6 @@
     </div>
   </section>
 
-  <!-- 市町村選択画面 -->
   <section id="city-screen" class="screen">
     <h2 id="city-heading">市町村を選んでください</h2>
     <div id="city-list" class="grid"></div>
@@ -108,7 +104,6 @@
     </div>
   </section>
 
-  <!-- 結果画面 -->
   <section id="result-screen" class="screen">
     <h2>AED設置コンビニ</h2>
     <p id="result-info"></p>
@@ -125,7 +120,25 @@
 </div>
 
 <script>
-// 画面切り替え
+// --- データサンプル ---
+const data = {
+  "北海道・東北": {
+    "北海道": {
+      "札幌市": ["セブンイレブン札幌中央店", "ファミリーマート札幌駅前店"],
+      "函館市": ["ローソン函館五稜郭店"]
+    },
+    "青森県": {
+      "青森市": ["セブンイレブン青森駅前店"]
+    }
+  },
+  "関東": {
+    "東京都": {
+      "立川市": ["セブンイレブン立川駅北口店", "ファミリーマート立川幸町店"]
+    }
+  }
+};
+
+// --- 画面切り替え ---
 const screens = {
   start: document.getElementById('start-screen'),
   region: document.getElementById('region-screen'),
@@ -134,35 +147,84 @@ const screens = {
   result: document.getElementById('result-screen')
 };
 
+function showScreen(screen) {
+  for (let key in screens) screens[key].classList.remove('active');
+  screens[screen].classList.add('active');
+}
+
+// --- ボタン ---
 const startBtn = document.getElementById('start-btn');
 const backRegionBtn = document.getElementById('back-from-region');
 const backPrefBtn = document.getElementById('back-from-pref');
 const backCityBtn = document.getElementById('back-from-city');
 const retryBtn = document.getElementById('retry-btn');
+const regionList = document.getElementById('region-list');
+const prefectureList = document.getElementById('prefecture-list');
+const cityList = document.getElementById('city-list');
+const resultList = document.getElementById('result-list');
+const resultInfo = document.getElementById('result-info');
 
-function showScreen(screen) {
-  for (let key in screens) {
-    screens[key].classList.remove('active');
+function createButtons(container, items, clickHandler) {
+  container.innerHTML = "";
+  for (let key of items) {
+    const btn = document.createElement('button');
+    btn.textContent = key;
+    btn.addEventListener('click', () => clickHandler(key));
+    btn.addEventListener('touchstart', () => clickHandler(key));
+    container.appendChild(btn);
   }
-  screens[screen].classList.add('active');
 }
 
-// PC・スマホ両方で反応
-[startBtn, backRegionBtn, backPrefBtn, backCityBtn, retryBtn].forEach(btn => {
-  btn.addEventListener('click', () => {
-    if(btn.id === 'start-btn') showScreen('region');
-    if(btn.id === 'back-from-region') showScreen('start');
-    if(btn.id === 'back-from-pref') showScreen('region');
-    if(btn.id === 'back-from-city') showScreen('prefecture');
-    if(btn.id === 'retry-btn') showScreen('region');
+// --- 選択処理 ---
+let selectedRegion, selectedPref, selectedCity;
+
+startBtn.addEventListener('click', () => {
+  createButtons(regionList, Object.keys(data), regionClick);
+  showScreen('region');
+});
+startBtn.addEventListener('touchstart', () => {
+  createButtons(regionList, Object.keys(data), regionClick);
+  showScreen('region');
+});
+
+backRegionBtn.addEventListener('click', () => showScreen('start'));
+backRegionBtn.addEventListener('touchstart', () => showScreen('start'));
+backPrefBtn.addEventListener('click', () => showScreen('region'));
+backPrefBtn.addEventListener('touchstart', () => showScreen('region'));
+backCityBtn.addEventListener('click', () => showScreen('prefecture'));
+backCityBtn.addEventListener('touchstart', () => showScreen('prefecture'));
+retryBtn.addEventListener('click', () => showScreen('region'));
+retryBtn.addEventListener('touchstart', () => showScreen('region'));
+
+function regionClick(region) {
+  selectedRegion = region;
+  createButtons(prefectureList, Object.keys(data[region]), prefectureClick);
+  showScreen('prefecture');
+}
+
+function prefectureClick(pref) {
+  selectedPref = pref;
+  createButtons(cityList, Object.keys(data[selectedRegion][pref]), cityClick);
+  showScreen('city');
+}
+
+function cityClick(city) {
+  selectedCity = city;
+  const stores = data[selectedRegion][selectedPref][city];
+  resultList.innerHTML = "";
+  stores.forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    resultList.appendChild(li);
   });
-  btn.addEventListener('touchstart', () => {
-    if(btn.id === 'start-btn') showScreen('region');
-    if(btn.id === 'back-from-region') showScreen('start');
-    if(btn.id === 'back-from-pref') showScreen('region');
-    if(btn.id === 'back-from-city') showScreen('prefecture');
-    if(btn.id === 'retry-btn') showScreen('region');
-  });
+  resultInfo.textContent = `${selectedRegion} > ${selectedPref} > ${city} のAED設置店舗`;
+  showScreen('result');
+}
+
+// コピー機能
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const text = Array.from(resultList.children).map(li => li.textContent).join("\n");
+  navigator.clipboard.writeText(text).then(() => alert("店舗名をコピーしました"));
 });
 </script>
 
